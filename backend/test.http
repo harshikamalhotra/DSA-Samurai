@@ -1,0 +1,10 @@
+### Test sync service health
+GET http://localhost:3001/api/sync/test
+Authorization: Bearer test-token
+
+### Test sync for student ID 1
+POST http://localhost:3001/api/sync/student/1
+Authorization: Bearer test-token
+
+### Test LeetCode API directly
+GET https://alfa-leetcode-api.onrender.com/aarushi_28/acSubmission?limit=5

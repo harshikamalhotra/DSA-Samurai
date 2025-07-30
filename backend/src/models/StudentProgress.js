@@ -2,6 +2,30 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/dsasamuraitracker');
 
 const StudentProgress = sequelize.define('StudentProgress', {
+  student_id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    references: {
+      model: 'students',
+      key: 'id'
+    }
+  },
+  question_id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    references: {
+      model: 'questions',
+      key: 'id'
+    }
+  },
+  assignment_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'assignments',
+      key: 'id'
+    }
+  },
   status: { 
     type: DataTypes.ENUM('Solved', 'Attempted', 'Pending'), 
     defaultValue: 'Pending' 

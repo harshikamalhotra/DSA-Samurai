@@ -4,7 +4,13 @@ const sequelize = require('../config/dsasamuraitracker');
 const Question = sequelize.define('Question', {
   title: { 
     type: DataTypes.STRING, 
-    allowNull: false 
+    allowNull: false,
+    unique: true
+  },
+  title_slug: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
   },
   description: { 
     type: DataTypes.TEXT 
