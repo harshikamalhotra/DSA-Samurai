@@ -11,28 +11,34 @@ function Leaderboard() {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        // For now, show mock data until we create the leaderboard API
-        const mockData = [
-          {
-            id: '688b9fea640710be69f37b87',
-            name: 'Test Student',
-            total_solved: 1,
-            leetcode_solved: 0,
-            gfg_solved: 1,
-            streak_count: 0,
-            last_active: new Date()
+        const response = await fetch(`http://localhost:3001/api/leaderboard?sortBy=total_solved&limit=50`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
-        ];
-        setLeaderboard(mockData);
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+          setLeaderboard(data.leaderboard || []);
+        } else {
+          throw new Error(data.error || 'Failed to fetch leaderboard');
+        }
       } catch (err) {
-        setError('Failed to load leaderboard.');
+        setError('Failed to load leaderboard. Please try again later.');
         console.error('Leaderboard error:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLeaderboard();
+    if (token) {
+      fetchLeaderboard();
+    } else {
+      setLoading(false);
+      setError('Please log in to view the leaderboard.');
+    }
   }, [token]);
 
   if (loading) return <div className="loading">Loading leaderboard...</div>;

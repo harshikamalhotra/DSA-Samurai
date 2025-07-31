@@ -5,6 +5,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const syncRoutes = require('./routes/sync');
+const leaderboardRoutes = require('./routes/leaderboard');
 const connectDB = require('./config/mongodb');
 
 const app = express();
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/sync', syncRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 // Connect to MongoDB Atlas
 connectDB()

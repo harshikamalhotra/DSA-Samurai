@@ -22,26 +22,15 @@ async function checkDatabase() {
       console.log('   ---');
     });
 
-    // If no students exist, create a test student
+    // Show existing students
     if (students.length === 0) {
-      console.log('No students found. Creating test student...');
-      
-      const testStudent = new Student({
-        name: 'Test Student',
-        enrollment_id: '2401010999',
-        email: 'test@example.com',
-        leetcode_id: 'Cpj9QpiECB', // Using the example from the API test
-        gfg_id: 'snuhikhv3', // Using the example from the API test
-        phone: '+1234567890',
-        password: '2401010999tes' // enrollment_id + first 3 letters of name
-      });
-
-      await testStudent.save();
-      console.log('Test student created with ID:', testStudent._id);
-      return testStudent._id;
+      console.log('No students found in dsa_sammurai_db database.');
+      console.log('Please check if you have students in your database or if the connection string is correct.');
+    } else {
+      console.log(`Found ${students.length} students in your dsa_sammurai_db database.`);
     }
 
-    return students[0]._id; // Return first student ID for testing
+    return students.length > 0 ? students[0]._id : null;
 
   } catch (error) {
     console.error('Database error:', error);

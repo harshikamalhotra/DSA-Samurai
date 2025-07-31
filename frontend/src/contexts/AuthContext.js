@@ -182,6 +182,56 @@ export function AuthProvider({ children }) {
     initAuth();
   }, [token]);
 
+  // Get leaderboard
+  const getLeaderboard = async (sortBy = 'total_solved', limit = 50) => {
+    if (!token) return null;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/leaderboard?sortBy=${sortBy}&limit=${limit}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        return data;
+      } else {
+        throw new Error(data.error || 'Failed to get leaderboard');
+      }
+    } catch (error) {
+      console.error('Error getting leaderboard:', error);
+      throw error;
+    }
+  };
+
+  // Get my rank
+  const getMyRank = async () => {
+    if (!token) return null;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/leaderboard/my-rank`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        return data;
+      } else {
+        throw new Error(data.error || 'Failed to get rank');
+      }
+    } catch (error) {
+      console.error('Error getting rank:', error);
+      throw error;
+    }
+  };
+
   const value = {
     currentUser,
     userProfile,
@@ -192,6 +242,8 @@ export function AuthProvider({ children }) {
     getUserStats,
     getSolvedQuestions,
     syncProgress,
+    getLeaderboard,
+    getMyRank,
     loading
   };
 
