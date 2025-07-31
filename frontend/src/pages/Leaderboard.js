@@ -1,74 +1,106 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import Navigation from '../components/Navigation';
 
 function Leaderboard() {
-  const [students, setStudents] = useState([]);
-  const [filter, setFilter] = useState('all-time');
-
-  // Mock data - replace with API call
-  const mockStudents = [
-    { id: 1, name: 'Alice Johnson', solved: 120, rank: 1 },
-    { id: 2, name: 'Bob Smith', solved: 105, rank: 2 },
-    { id: 3, name: 'Charlie Brown', solved: 95, rank: 3 },
-    { id: 4, name: 'Diana Prince', solved: 88, rank: 4 },
-    { id: 5, name: 'Edward Norton', solved: 75, rank: 5 },
-  ];
+  const { token } = useAuth();
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setStudents(mockStudents);
-    }, 500);
-  }, []);
+    const fetchLeaderboard = async () => {
+      try {
+        // For now, show mock data until we create the leaderboard API
+        const mockData = [
+          {
+            id: '688b9fea640710be69f37b87',
+            name: 'Test Student',
+            total_solved: 1,
+            leetcode_solved: 0,
+            gfg_solved: 1,
+            streak_count: 0,
+            last_active: new Date()
+          }
+        ];
+        setLeaderboard(mockData);
+      } catch (err) {
+        setError('Failed to load leaderboard.');
+        console.error('Leaderboard error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, [token]);
+
+  if (loading) return <div className="loading">Loading leaderboard...</div>;
+  if (error) return <div className="error">{error}</div>;
 
   return (
     <div>
       <Navigation />
       <div className="container mt-4">
-        <h1>Leaderboard</h1>
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <div>
-            <button 
-              className={`btn ${filter === 'all-time' ? 'btn-primary' : 'btn-outline-primary'} me-2`}
-              onClick={() => setFilter('all-time')}
-            >
-              All Time
-            </button>
-            <button 
-              className={`btn ${filter === 'weekly' ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => setFilter('weekly')}
-            >
-              Weekly
-            </button>
-          </div>
-        </div>
+        <h1>🏆 Leaderboard</h1>
         
-        <div className="card">
-          <div className="card-body">
+        {leaderboard.length === 0 ? (
+          <div className="alert alert-info">
+            No data available yet. Complete some problems to see the leaderboard!
+          </div>
+        ) : (
+          <div className="table-responsive">
             <table className="table table-striped">
-              <thead>
+              <thead className="table-dark">
                 <tr>
-                  <th>Rank</th>
-                  <th>Name</th>
-                  <th>Problems Solved</th>
+                  <th>🥇 Rank</th>
+                  <th>👤 Name</th>
+                  <th>📊 Total Solved</th>
+                  <th>💻 LeetCode</th>
+                  <th>🌟 GeeksforGeeks</th>
+                  <th>🔥 Current Streak</th>
+                  <th>📅 Last Active</th>
                 </tr>
               </thead>
               <tbody>
-                {students.map((student) => (
+                {leaderboard.map((student, index) => (
                   <tr key={student.id}>
                     <td>
-                      <span className={`badge ${student.rank <= 3 ? 'bg-warning' : 'bg-secondary'}`}>
-                        #{student.rank}
+                      <span className={`badge ${
+                        index === 0 ? 'bg-warning' : 
+                        index === 1 ? 'bg-secondary' : 
+                        index === 2 ? 'bg-warning' : 'bg-primary'
+                      }`}>
+                        {index + 1}
+                        {index === 0 && ' 🥇'}
+                        {index === 1 && ' 🥈'}
+                        {index === 2 && ' 🥉'}
                       </span>
                     </td>
-                    <td>{student.name}</td>
-                    <td>{student.solved}</td>
+                    <td><strong>{student.name}</strong></td>
+                    <td>
+                      <span className="badge bg-success">{student.total_solved}</span>
+                    </td>
+                    <td>
+                      <span className="badge bg-primary">{student.leetcode_solved}</span>
+                    </td>
+                    <td>
+                      <span className="badge bg-info">{student.gfg_solved}</span>
+                    </td>
+                    <td>
+                      <span className="badge bg-danger">{student.streak_count}</span>
+                    </td>
+                    <td>
+                      <small className="text-muted">
+                        {student.last_active ? new Date(student.last_active).toLocaleDateString() : 'Never'}
+                      </small>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

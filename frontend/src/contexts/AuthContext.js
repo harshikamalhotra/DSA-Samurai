@@ -1,27 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  signOut,
-  onAuthStateChanged 
-} from 'firebase/auth';
 
-// Firebase configuration (you'll need to replace with your actual config)
-const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+const API_BASE_URL = 'http://localhost:3001/api';
 
 const AuthContext = createContext();
 
@@ -33,14 +12,32 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
 
-  // Sign in with Google
-  const signInWithGoogle = async () => {
+  // Login with email and password
+  const login = async (email, password) => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      return result.user;
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        const { token, student } = data;
+        localStorage.setItem('token', token);
+        setToken(token);
+        setCurrentUser(student);
+        setUserProfile(student);
+        return student;
+      } else {
+        throw new Error(data.error || 'Login failed');
+      }
     } catch (error) {
-      console.error('Error signing in with Google:', error);
+      console.error('Error logging in:', error);
       throw error;
     }
   };
@@ -48,7 +45,9 @@ export function AuthProvider({ children }) {
   // Sign out
   const logout = async () => {
     try {
-      await signOut(auth);
+      localStorage.removeItem('token');
+      setToken(null);
+      setCurrentUser(null);
       setUserProfile(null);
     } catch (error) {
       console.error('Error signing out:', error);
@@ -56,40 +55,12 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Link account with backend
-  const linkAccount = async () => {
-    if (!currentUser) return null;
-    
-    try {
-      const token = await currentUser.getIdToken();
-      const response = await fetch('http://localhost:3001/api/user/link-account', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const data = await response.json();
-      if (response.ok) {
-        setUserProfile(data.student);
-        return data.student;
-      } else {
-        throw new Error(data.error || 'Failed to link account');
-      }
-    } catch (error) {
-      console.error('Error linking account:', error);
-      throw error;
-    }
-  };
-
-  // Get user profile
+  // Get user profile with stats
   const getUserProfile = async () => {
-    if (!currentUser) return null;
+    if (!token) return null;
     
     try {
-      const token = await currentUser.getIdToken();
-      const response = await fetch('http://localhost:3001/api/user/profile', {
+      const response = await fetch(`${API_BASE_URL}/user/profile`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -100,47 +71,127 @@ export function AuthProvider({ children }) {
       const data = await response.json();
       if (response.ok) {
         setUserProfile(data.profile);
-        return data.profile;
+        return data;
       } else {
-        // Profile not found, try to link account
-        if (response.status === 404) {
-          return await linkAccount();
-        }
         throw new Error(data.error || 'Failed to get profile');
       }
     } catch (error) {
       console.error('Error getting profile:', error);
+      // If token is invalid, logout
+      if (error.message.includes('token') || error.message.includes('401')) {
+        logout();
+      }
+      throw error;
+    }
+  };
+
+  // Get user stats
+  const getUserStats = async () => {
+    if (!token) return null;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/stats`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        return data;
+      } else {
+        throw new Error(data.error || 'Failed to get stats');
+      }
+    } catch (error) {
+      console.error('Error getting stats:', error);
+      throw error;
+    }
+  };
+
+  // Get solved questions
+  const getSolvedQuestions = async (page = 1, limit = 20, platform = null) => {
+    if (!token) return null;
+    
+    try {
+      let url = `${API_BASE_URL}/user/solved-questions?page=${page}&limit=${limit}`;
+      if (platform) {
+        url += `&platform=${platform}`;
+      }
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        return data;
+      } else {
+        throw new Error(data.error || 'Failed to get solved questions');
+      }
+    } catch (error) {
+      console.error('Error getting solved questions:', error);
+      throw error;
+    }
+  };
+
+  // Sync student progress
+  const syncProgress = async () => {
+    if (!token || !currentUser) return null;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/sync/student/${currentUser.id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        return data;
+      } else {
+        throw new Error(data.error || 'Failed to sync progress');
+      }
+    } catch (error) {
+      console.error('Error syncing progress:', error);
       throw error;
     }
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      
-      if (user) {
+    const initAuth = async () => {
+      if (token) {
         try {
-          await getUserProfile();
+          const profileData = await getUserProfile();
+          setCurrentUser(profileData.profile);
         } catch (error) {
-          console.error('Error getting user profile:', error);
+          console.error('Error initializing auth:', error);
+          logout();
         }
-      } else {
-        setUserProfile(null);
       }
-      
       setLoading(false);
-    });
+    };
 
-    return unsubscribe;
-  }, []);
+    initAuth();
+  }, [token]);
 
   const value = {
     currentUser,
     userProfile,
-    signInWithGoogle,
+    token,
+    login,
     logout,
-    linkAccount,
     getUserProfile,
+    getUserStats,
+    getSolvedQuestions,
+    syncProgress,
     loading
   };
 

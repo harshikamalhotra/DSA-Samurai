@@ -5,19 +5,29 @@ import './LoginPage.css';
 
 function LoginPage() {
   const [isStudentTab, setIsStudentTab] = useState(true);
-  const { signInWithGoogle } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleGoogleLogin = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
     setLoading(true);
     setError('');
+    
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+    
     try {
-      await signInWithGoogle();
+      await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Failed to sign in. Please try again.');
+      setError(err.message || 'Failed to sign in. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -47,14 +57,45 @@ function LoginPage() {
           {isStudentTab ? (
             <div className="login-form student-form">
               <h2 className="card-title">Student Login</h2>
-              <p>Please sign in with your college Google account.</p>
-              <button 
-                className="btn btn-primary btn-google mt-2" 
-                onClick={handleGoogleLogin}
-                disabled={loading}
-              >
-                {loading ? 'Signing in...' : 'Sign in with Google'}
-              </button>
+              <p>Enter your email and password to access your dashboard.</p>
+              <form onSubmit={handleLogin}>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="student-email">Email</label>
+                  <input 
+                    className="form-input" 
+                    type="email" 
+                    id="student-email" 
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="student-password">Password</label>
+                  <input 
+                    className="form-input" 
+                    type="password" 
+                    id="student-password" 
+                    placeholder="Enrollment ID + first 3 letters of name"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary mt-2"
+                  disabled={loading}
+                >
+                  {loading ? 'Signing in...' : 'Login'}
+                </button>
+              </form>
+              <div className="login-help">
+                <small>Password format: EnrollmentID + first 3 letters of your name (lowercase)</small>
+                <br />
+                <small>Example: 2401010035har</small>
+              </div>
             </div>
           ) : (
             <div className="login-form admin-form">
