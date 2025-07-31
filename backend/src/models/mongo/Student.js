@@ -24,11 +24,11 @@ const studentSchema = new mongoose.Schema({
       message: 'Please enter a valid email'
     }
   },
-  gfg_id: {
+  gfg_username: {
     type: String,
     trim: true
   },
-  leetcode_id: {
+  leetcode_username: {
     type: String,
     trim: true
   },

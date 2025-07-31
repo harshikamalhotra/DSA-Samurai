@@ -27,6 +27,7 @@ function LoginPage() {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
+      console.error('Login error:', err);
       setError(err.message || 'Failed to sign in. Please check your credentials.');
     } finally {
       setLoading(false);
@@ -91,11 +92,6 @@ function LoginPage() {
                   {loading ? 'Signing in...' : 'Login'}
                 </button>
               </form>
-              <div className="login-help">
-                <small>Password format: EnrollmentID + first 3 letters of your name (lowercase)</small>
-                <br />
-                <small>Example: 2401010035har</small>
-              </div>
             </div>
           ) : (
             <div className="login-form admin-form">

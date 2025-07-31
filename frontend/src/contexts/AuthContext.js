@@ -60,7 +60,7 @@ export function AuthProvider({ children }) {
     if (!token) return null;
     
     try {
-      const response = await fetch(`${API_BASE_URL}/user/profile`, {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -70,7 +70,7 @@ export function AuthProvider({ children }) {
       
       const data = await response.json();
       if (response.ok) {
-        setUserProfile(data.profile);
+        setUserProfile(data.student);
         return data;
       } else {
         throw new Error(data.error || 'Failed to get profile');
@@ -145,7 +145,9 @@ export function AuthProvider({ children }) {
     if (!token || !currentUser) return null;
     
     try {
-      const response = await fetch(`${API_BASE_URL}/sync/student/${currentUser.id}`, {
+      // Use _id or id depending on what's available
+      const studentId = currentUser._id || currentUser.id;
+      const response = await fetch(`${API_BASE_URL}/sync/student/${studentId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -170,7 +172,7 @@ export function AuthProvider({ children }) {
       if (token) {
         try {
           const profileData = await getUserProfile();
-          setCurrentUser(profileData.profile);
+          setCurrentUser(profileData.student);
         } catch (error) {
           console.error('Error initializing auth:', error);
           logout();

@@ -6,6 +6,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const syncRoutes = require('./routes/sync');
 const leaderboardRoutes = require('./routes/leaderboard');
+const questionsRoutes = require('./routes/questions');
 const connectDB = require('./config/mongodb');
 
 const app = express();
@@ -16,6 +17,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/sync', syncRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/questions', questionsRoutes);
 
 // Connect to MongoDB Atlas
 connectDB()

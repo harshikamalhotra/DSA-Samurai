@@ -20,8 +20,8 @@ function Navigation() {
       <Link to="/dashboard" className="nav-brand">DSA Samurai</Link>
       
       <ul className="nav-links">
-        <li><Link to="/dashboard" className="nav-link">Home</Link></li>
         <li><Link to="/dashboard" className="nav-link">Dashboard</Link></li>
+        <li><Link to="/questions" className="nav-link">Questions</Link></li>
         <li><Link to="/leaderboard" className="nav-link">Leaderboard</Link></li>
         <li><Link to="/profile" className="nav-link">Profile</Link></li>
         <li>

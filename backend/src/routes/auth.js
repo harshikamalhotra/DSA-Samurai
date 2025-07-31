@@ -50,8 +50,8 @@ router.post('/login', async (req, res) => {
         name: student.name,
         enrollment_id: student.enrollment_id,
         email: student.email,
-        gfg_id: student.gfg_id,
-        leetcode_id: student.leetcode_id,
+        gfg_username: student.gfg_username,
+        leetcode_username: student.leetcode_username,
         streak_count: student.streak_count,
         last_active: student.last_active
       }
@@ -82,11 +82,11 @@ router.get('/me', authenticateToken, async (req, res) => {
 // Update profile
 router.put('/profile', authenticateToken, async (req, res) => {
   try {
-    const { name, email, phone, gfg_id, leetcode_id } = req.body;
+    const { name, email, phone, gfg_username, leetcode_username } = req.body;
     
     const student = await Student.findByIdAndUpdate(
       req.user.studentId,
-      { name, email, phone, gfg_id, leetcode_id, updated_at: new Date() },
+      { name, email, phone, gfg_username, leetcode_username, updated_at: new Date() },
       { new: true, runValidators: true }
     ).select('-password');
 

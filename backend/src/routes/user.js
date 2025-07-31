@@ -20,8 +20,13 @@ router.get('/profile', authenticateToken, async (req, res) => {
     const progressLeetCode = await StudentProgress.find({ student_id: student._id, platform: 'LeetCode' });
     const progressGFG = await StudentProgress.find({ student_id: student._id, platform: 'GeeksforGeeks' });
 
+    // Use the correct field names from database
+    const profileForFrontend = {
+      ...student.toObject()
+    };
+
     res.json({
-      profile: student,
+      profile: profileForFrontend,
       progress: {
         leetcode: progressLeetCode,
         geeksforgeeks: progressGFG
@@ -113,29 +118,40 @@ router.post('/register', authenticateToken, async (req, res) => {
 // Update student profile
 router.put('/profile', authenticateToken, async (req, res) => {
   try {
-    const { name, gfg_id, leetcode_id, phone } = req.body;
+    const { name, gfg_username, leetcode_username, phone } = req.body;
     
-    const [updatedRows] = await Student.update(
-      { name, gfg_id, leetcode_id, phone },
-      { where: { firebase_uid: req.user.uid } }
+    // Update the student profile
+    const updatedStudent = await Student.findByIdAndUpdate(
+      req.student._id,
+      { 
+        name, 
+        gfg_username,
+        leetcode_username,
+        phone,
+        updated_at: new Date()
+      },
+      { new: true } // Return the updated document
     );
     
-    if (updatedRows === 0) {
+    if (!updatedStudent) {
       return res.status(404).json({ error: 'Student profile not found' });
     }
     
-    const updatedStudent = await Student.findOne({
-      where: { firebase_uid: req.user.uid }
+    res.json({ 
+      message: 'Profile updated successfully', 
+      student: {
+        id: updatedStudent._id,
+        name: updatedStudent.name,
+        enrollment_id: updatedStudent.enrollment_id,
+        email: updatedStudent.email,
+        leetcode_username: updatedStudent.leetcode_username,
+        gfg_username: updatedStudent.gfg_username,
+        phone: updatedStudent.phone
+      }
     });
-    
-    res.json({ message: 'Profile updated successfully', student: updatedStudent });
   } catch (error) {
     console.error('Error updating profile:', error);
-    if (error.name === 'SequelizeValidationError') {
-      res.status(400).json({ error: error.errors.map(e => e.message) });
-    } else {
-      res.status(500).json({ error: 'Failed to update profile' });
-    }
+    res.status(500).json({ error: 'Failed to update profile' });
   }
 });
 
@@ -226,8 +242,8 @@ router.get('/stats', authenticateToken, async (req, res) => {
         id: req.student._id,
         name: req.student.name,
         enrollment_id: req.student.enrollment_id,
-        leetcode_id: req.student.leetcode_id,
-        gfg_id: req.student.gfg_id
+        leetcode_username: req.student.leetcode_username,
+        gfg_username: req.student.gfg_username
       },
       stats
     });
