@@ -5,7 +5,6 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 import Navigation from '../components/Navigation';
 import { leetcodeService } from '../services/leetcodeService';
 import { gfgService } from '../services/gfgService';
-import { testGFGAPI, testWithKnownUsername } from '../utils/debugGFG';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
@@ -153,9 +152,9 @@ function StudentDashboard() {
         {/* Header Section */}
         <div className="row mb-4">
           <div className="col-12">
-            <div className="bg-gradient-primary text-white p-4 rounded-3 shadow">
-              <h1 className="mb-1">👋 Hello, {profileData?.name || currentUser?.name || 'Student'}!</h1>
-              <p className="mb-0 opacity-75">Welcome to your coding journey dashboard</p>
+            <div className="bg-gradient-primary p-4 rounded-3 shadow">
+              <h1 className="mb-1 text-dark">👋 Hello, {profileData?.name || currentUser?.name || 'Student'}!</h1>
+              <p className="mb-0 text-dark">Welcome to your coding journey dashboard</p>
             </div>
           </div>
         </div>
@@ -445,79 +444,6 @@ function StudentDashboard() {
           </div>
         )}
 
-        {/* Debug Section - Only in Development */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="row mb-4">
-            <div className="col-12">
-              <div className="card border-warning">
-                <div className="card-header bg-warning text-dark">
-                  <h5 className="mb-0">🐛 Debug GFG API</h5>
-                </div>
-                <div className="card-body">
-                  <div className="row">
-                    <div className="col-md-6">
-                      <button 
-                        className="btn btn-outline-primary me-2 mb-2"
-                        onClick={() => testWithKnownUsername()}
-                      >
-                        Test with Known Username
-                      </button>
-                      {profileData?.gfg_username && (
-                        <button 
-                          className="btn btn-outline-success mb-2"
-                          onClick={() => testGFGAPI(profileData.gfg_username)}
-                        >
-                          Test Your Username: {profileData.gfg_username}
-                        </button>
-                      )}
-                    </div>
-                    <div className="col-md-6">
-                      <small className="text-muted">
-                        Check the browser console for detailed API response information.
-                        This helps identify CORS, network, or API structure issues.
-                      </small>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Additional Stats */}
-        {leetcodeData?.profile && (
-          <div className="row">
-            <div className="col-12">
-              <div className="card shadow-sm">
-                <div className="card-header">
-                  <h5 className="mb-0">📈 Additional Information</h5>
-                </div>
-                <div className="card-body">
-                  <div className="row text-center">
-                    <div className="col-md-4">
-                      <h6 className="text-muted">Acceptance Rate</h6>
-                      <p className="h5 text-success">
-                        {leetcodeData.solved.acceptanceRate || 'N/A'}%
-                      </p>
-                    </div>
-                    <div className="col-md-4">
-                      <h6 className="text-muted">Global Ranking</h6>
-                      <p className="h5 text-primary">
-                        {leetcodeData.profile.ranking || 'Unranked'}
-                      </p>
-                    </div>
-                    <div className="col-md-4">
-                      <h6 className="text-muted">Total Questions</h6>
-                      <p className="h5 text-info">
-                        {leetcodeData.solved.totalQuestions || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
