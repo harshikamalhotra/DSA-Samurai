@@ -1,6 +1,6 @@
 const express = require('express');
 const authenticateToken = require('../middleware/auth');
-const { Student } = require('../models');
+const Student = require('../models/mongo/Student');
 const router = express.Router();
 
 // Get user profile

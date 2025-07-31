@@ -1,5 +1,7 @@
 const axios = require('axios');
-const { Student, Question, StudentProgress } = require('../models');
+const Student = require('../models/mongo/Student');
+const Question = require('../models/mongo/Question');
+const StudentProgress = require('../models/mongo/StudentProgress');
 
 const LEETCODE_API_URL = 'https://alfa-leetcode-api.onrender.com';
 
@@ -14,45 +16,51 @@ async function syncLeetCode(student) {
     const submissions = response.data.submission;
 
     if (!submissions || submissions.length === 0) {
-      console.log(`No new LeetCode submissions found for ${student.name}.`);
+      console.log(`No LeetCode submissions found for ${student.name}.`);
       return;
     }
 
     for (const submission of submissions) {
-      const { title, titleSlug, timestamp } = submission;
+      const { title, titleSlug, timestamp, lang } = submission;
 
       // Find or create the question in our database
-      let question = await Question.findOne({ where: { title_slug: titleSlug } });
+      let question = await Question.findOne({ platform: 'LeetCode', title_slug: titleSlug });
       if (!question) {
-        // If the question doesn't exist, we can't get difficulty, so we skip
-        // A better approach would be to fetch problem details if it doesn't exist
-        console.log(`Question "${title}" not found in database. Skipping.`);
-        continue;
+        // Create new question if it doesn't exist
+        question = new Question({
+          title,
+          title_slug: titleSlug,
+          difficulty: 'Medium', // Default difficulty, can be updated later
+          platform: 'LeetCode',
+          question_url: `https://leetcode.com/problems/${titleSlug}`
+        });
+        await question.save();
+        console.log(`New LeetCode question saved: ${title}`);
       }
 
       // Check if progress for this question already exists
-      const [progress, created] = await StudentProgress.findOrCreate({
-        where: {
-          student_id: student.id,
-          question_id: question.id,
-        },
-        defaults: {
-          status: 'Solved',
-          solved_at: new Date(parseInt(timestamp, 10) * 1000),
-          platform: 'LeetCode'
-        }
+      const existingProgress = await StudentProgress.findOne({
+        student_id: student._id,
+        question_id: question._id
       });
 
-      if (created) {
+      if (!existingProgress) {
+        const newProgress = new StudentProgress({
+          student_id: student._id,
+          question_id: question._id,
+          status: 'Solved',
+          solved_at: new Date(parseInt(timestamp, 10) * 1000),
+          platform: 'LeetCode',
+          programming_language: lang
+        });
+        await newProgress.save();
         console.log(`New LeetCode progress recorded for ${student.name} - solved "${title}"`);
-      } else {
-        // If progress already exists, we can update it if needed (e.g., update timestamp)
-        if (progress.status !== 'Solved') {
-          progress.status = 'Solved';
-          progress.solved_at = new Date(parseInt(timestamp, 10) * 1000);
-          await progress.save();
-          console.log(`Updated LeetCode progress for ${student.name} - solved "${title}"`);
-        }
+      } else if (existingProgress.status !== 'Solved') {
+        existingProgress.status = 'Solved';
+        existingProgress.solved_at = new Date(parseInt(timestamp, 10) * 1000);
+        existingProgress.programming_language = lang;
+        await existingProgress.save();
+        console.log(`Updated LeetCode progress for ${student.name} - solved "${title}"`);
       }
     }
 
@@ -66,13 +74,53 @@ async function syncGeeksForGeeks(student) {
     console.log(`Skipping GeeksForGeeks sync for ${student.name} - no GFG ID.`);
     return;
   }
-  // GFG sync logic will go here in the future
-  console.log(`GeeksForGeeks sync not yet implemented for ${student.name}.`);
+
+  try {
+    const response = await axios.get(`https://geeks-for-geeks-api.vercel.app/${student.gfg_id}`);
+    const solvedStats = response.data.solvedStats;
+
+    if (!solvedStats || !solvedStats.basic || solvedStats.basic.count === 0) {
+      console.log(`No new GFG submissions found for ${student.name}.`);
+      return;
+    }
+
+    for (const question of solvedStats.basic.questions) {
+      const { question: title, questionUrl: titleSlug } = question;
+
+      let dbQuestion = await Question.findOne({ platform: 'GeeksforGeeks', title_slug: titleSlug });
+      if (!dbQuestion) {
+        dbQuestion = new Question({
+          title,
+          title_slug: titleSlug,
+          difficulty: 'Basic',
+          platform: 'GeeksforGeeks',
+          question_url: titleSlug
+        });
+        await dbQuestion.save();
+        console.log(`New GFG question saved: ${title}`);
+      }
+
+      const progress = await StudentProgress.findOne({ student_id: student._id, question_id: dbQuestion._id });
+      if (!progress) {
+        const newProgress = new StudentProgress({
+          student_id: student._id,
+          question_id: dbQuestion._id,
+          status: 'Solved',
+          platform: 'GeeksforGeeks',
+          solved_at: new Date()
+        });
+        await newProgress.save();
+        console.log(`New GFG progress recorded for ${student.name} - solved "${title}"`);
+      }
+    }
+  } catch (error) {
+    console.error(`Error syncing GeeksForGeeks for ${student.name}:`, error.message);
+  }
 }
 
 
 async function syncStudentById(studentId) {
-  const student = await Student.findByPk(studentId);
+  const student = await Student.findById(studentId);
   if (!student) {
     throw new Error('Student not found');
   }
