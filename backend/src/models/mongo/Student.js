@@ -41,13 +41,6 @@ const studentSchema = new mongoose.Schema({
       message: 'Please enter a valid phone number'
     }
   },
-  // Authentication fields
-  username: {
-    type: String,
-    unique: true,
-    trim: true,
-    lowercase: true
-  },
   password: {
     type: String,
     required: true,

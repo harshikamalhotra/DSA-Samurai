@@ -6,18 +6,15 @@ const router = express.Router();
 // Login endpoint
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find student by username or enrollment_id
+    // Find student by email
     const student = await Student.findOne({
-      $or: [
-        { username: username.toLowerCase() },
-        { enrollment_id: username }
-      ]
+      email: email.toLowerCase()
     });
 
     if (!student) {
@@ -38,7 +35,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { 
         studentId: student._id,
-        username: student.username,
+        email: student.email,
         enrollment_id: student.enrollment_id
       },
       process.env.JWT_SECRET,
@@ -51,7 +48,6 @@ router.post('/login', async (req, res) => {
       student: {
         id: student._id,
         name: student.name,
-        username: student.username,
         enrollment_id: student.enrollment_id,
         email: student.email,
         gfg_id: student.gfg_id,
