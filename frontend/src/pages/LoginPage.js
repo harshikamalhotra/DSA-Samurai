@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import FirebaseDiagnostic from '../components/FirebaseDiagnostic';
 import './LoginPage.css';
 
 function LoginPage() {
@@ -70,7 +69,7 @@ function LoginPage() {
                   <input className="form-input" type="password" id="admin-password" placeholder="Enter your password" />
                 </div>
                 <button type="submit" className="btn btn-primary mt-2" disabled>Login</button>
-                <a href="#" className="forgot-password">Forgot Password?</a>
+                <button type="button" className="btn btn-link forgot-password">Forgot Password?</button>
               </form>
             </div>
           )}

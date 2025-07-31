@@ -2,26 +2,23 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const syncRoutes = require('./routes/sync');
-const { sequelize, Student } = require('./models');
+const connectDB = require('./config/mongodb');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/sync', syncRoutes);
 
-sequelize.authenticate()
+// Connect to MongoDB Atlas
+connectDB()
   .then(() => {
-    console.log('PostgreSQL connected!');
-    
-
-    return sequelize.sync({ alter: true });
-  })
-  .then(() => {
-    console.log('All models were synchronized successfully.');
+    console.log('MongoDB Atlas connected successfully!');
     
     const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {
@@ -29,7 +26,7 @@ sequelize.authenticate()
     });
   })
   .catch(err => {
-    console.error('Database error:', err);
+    console.error('Database connection error:', err);
     process.exit(1);
   });
 
