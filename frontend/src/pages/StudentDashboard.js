@@ -17,6 +17,9 @@ function StudentDashboard() {
   const [error, setError] = useState('');
   const [leetcodeLoading, setLeetcodeLoading] = useState(false);
   const [gfgLoading, setGfgLoading] = useState(false);
+  const [typewriterText, setTypewriterText] = useState('');
+  const [subtitleText, setSubtitleText] = useState('');
+  const [showCursor, setShowCursor] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -100,6 +103,42 @@ function StudentDashboard() {
     fetchData();
   }, []);
 
+  // Typewriter effect for greeting
+  useEffect(() => {
+    if (!profileData) return; // Wait for profile data to load
+
+    const typeText = (text, setTextCallback, onComplete) => {
+      let index = 0;
+      const speed = 100; // Typing speed in ms
+      setTextCallback(''); // Reset text
+      
+      const type = () => {
+        if (index < text.length) {
+          setTextCallback(text.substring(0, index + 1));
+          index++;
+          setTimeout(type, speed);
+        } else if (onComplete) {
+          setTimeout(onComplete, 500); // Wait before next animation
+        }
+      };
+      type();
+    };
+    
+    // Type hello message first
+    const helloString = `👋 Hello, ${profileData.name || currentUser?.name || 'Student'}!`;
+    typeText(helloString, setTypewriterText, () => {
+      // After hello message, type subtitle
+      typeText("Welcome to your coding journey dashboard", setSubtitleText);
+    });
+    
+    // Blinking cursor effect
+    const cursorInterval = setInterval(() => {
+      setShowCursor((prev) => !prev);
+    }, 500);
+    
+    return () => clearInterval(cursorInterval);
+  }, [profileData, currentUser]);
+
   if (loading) return (
     <div className="d-flex justify-content-center align-items-center" style={{height: '50vh'}}>
       <div className="spinner-border text-primary" role="status">
@@ -153,50 +192,74 @@ function StudentDashboard() {
         <div className="row mb-4">
           <div className="col-12">
             <div className="bg-gradient-primary p-4 rounded-3 shadow">
-              <h1 className="mb-1 text-dark">👋 Hello, {profileData?.name || currentUser?.name || 'Student'}!</h1>
-              <p className="mb-0 text-dark">Welcome to your coding journey dashboard</p>
+            <h1 className="mb-1 text-dark">
+              {typewriterText}
+              {typewriterText && !subtitleText && showCursor && <span style={{color: '#333'}}>|</span>}
+            </h1>
+            <p className="mb-0 text-dark">
+              {subtitleText}
+              {subtitleText && showCursor && <span style={{color: '#333'}}>|</span>}
+            </p>
             </div>
           </div>
         </div>
 
-        {/* Profile Info Cards */}
+        {/* Enhanced Stats Overview */}
         <div className="row mb-4">
-          <div className="col-md-6 mb-3">
-            <div className="card h-100 shadow-sm">
-              <div className="card-body">
-                <h5 className="card-title text-primary">🔗 Platform Accounts</h5>
-                <div className="d-flex align-items-center mb-2">
-                  <span className="badge bg-warning text-dark me-2">LeetCode</span>
-                  <span className="text-muted">
-                    {profileData?.leetcode_username || 'Not connected'}
-                  </span>
-                </div>
-                <div className="d-flex align-items-center">
-                  <span className="badge bg-success me-2">GeeksforGeeks</span>
-                  <span className="text-muted">
-                    {profileData?.gfg_username || 'Not connected'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="col-md-6 mb-3">
-            <div className="card h-100 shadow-sm">
-              <div className="card-body">
-                <h5 className="card-title text-success">📊 Quick Stats</h5>
-                <div className="row text-center">
-                  <div className="col-6">
-                    <h3 className="text-primary mb-0">
-                      {(leetcodeData?.solved?.solvedProblem || 0) + (gfgData?.solved?.totalSolved || 0)}
-                    </h3>
-                    <small className="text-muted">Total Solved</small>
+          <div className="col-12">
+            <div className="card shadow-lg border-0">
+              <div className="card-body p-4">
+                <div className="row align-items-center">
+                  <div className="col-md-3 text-center mb-3 mb-md-0">
+                    <div className="stats-item">
+                      <div className="stats-icon bg-primary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style={{width: '60px', height: '60px'}}>
+                        <i className="fas fa-code text-white" style={{fontSize: '24px'}}></i>
+                      </div>
+                      <h2 className="stats-number text-primary mb-0 fw-bold">
+                        {(leetcodeData?.solved?.solvedProblem || 0) + (gfgData?.solved?.totalSolved || 0)}
+                      </h2>
+                      <p className="stats-label text-muted mb-0">Problems Solved</p>
+                      <small className="text-success">Keep coding! 💪</small>
+                    </div>
                   </div>
-                  <div className="col-6">
-                    <h3 className="text-warning mb-0">
-                      {leetcodeData?.profile?.ranking || gfgData?.info?.codingScore || 'N/A'}
-                    </h3>
-                    <small className="text-muted">{leetcodeData?.profile?.ranking ? 'LC Ranking' : 'GFG Score'}</small>
+                  
+                  <div className="col-md-3 text-center mb-3 mb-md-0">
+                    <div className="stats-item">
+                      <div className="stats-icon bg-warning bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style={{width: '60px', height: '60px'}}>
+                        <i className="fas fa-trophy text-white" style={{fontSize: '24px'}}></i>
+                      </div>
+                      <h2 className="stats-number text-warning mb-0 fw-bold">
+                        {leetcodeData?.profile?.ranking || gfgData?.info?.codingScore || '---'}
+                      </h2>
+                      <p className="stats-label text-muted mb-0">{leetcodeData?.profile?.ranking ? 'Global Rank' : 'GFG Score'}</p>
+                      <small className="text-info">Rising star! ⭐</small>
+                    </div>
+                  </div>
+                  
+                  <div className="col-md-3 text-center mb-3 mb-md-0">
+                    <div className="stats-item">
+                      <div className="stats-icon bg-success bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style={{width: '60px', height: '60px'}}>
+                        <i className="fas fa-fire text-white" style={{fontSize: '24px'}}></i>
+                      </div>
+                      <h2 className="stats-number text-success mb-0 fw-bold">
+                        {gfgData?.info?.currentStreak || profileData?.streak_count || 0}
+                      </h2>
+                      <p className="stats-label text-muted mb-0">Current Streak</p>
+                      <small className="text-warning">On fire! 🔥</small>
+                    </div>
+                  </div>
+                  
+                  <div className="col-md-3 text-center">
+                    <div className="stats-item">
+                      <div className="stats-icon bg-info bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style={{width: '60px', height: '60px'}}>
+                        <i className="fas fa-chart-line text-white" style={{fontSize: '24px'}}></i>
+                      </div>
+                      <h2 className="stats-number text-info mb-0 fw-bold">
+                        {leetcodeData?.solved ? Math.round(((leetcodeData.solved.solvedProblem || 0) / (leetcodeData.solved.totalQuestions || 1)) * 100) : 0}%
+                      </h2>
+                      <p className="stats-label text-muted mb-0">Progress Rate</p>
+                      <small className="text-primary">Keep going! 🚀</small>
+                    </div>
                   </div>
                 </div>
               </div>
